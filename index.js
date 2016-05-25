@@ -20,7 +20,7 @@ inherits( Parcelify, EventEmitter );
 
 function Parcelify( browserifyInstance, options ) {
 	var _this = this;
-	
+
 	if( ! ( this instanceof Parcelify ) ) return new Parcelify( browserifyInstance, options );
 
 	options = _.defaults( {}, options, {
@@ -29,7 +29,7 @@ function Parcelify( browserifyInstance, options ) {
 
 		appTransforms : undefined,
 		appTransformDirs : undefined,
-		
+
 		watch : undefined,
 		logLevel : undefined,
 
@@ -96,7 +96,7 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 			return _.union( assetTypesMemo, _.keys( bundlesForThisEntryPoint ) );
 		}, [] )
 	} else assetTypes = _.keys( options.bundles );
-	
+
 	var packages = _.reduce( existingPackages, function( memo, thisPackage, thisPackageId ) {
 		memo[ thisPackage.path ] = thisPackage.package;
 		return memo;
@@ -161,14 +161,14 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 						if( ! thisParcel.isParcel ) return nextEach();
 
 						var thisParcelBundles = options.bundlesByEntryPoint[ thisParcel.mainPath ];
-					
+
 						async.each( Object.keys( thisParcelBundles ), function( thisAssetType, nextEach ) {
 							var thisBundlePath = thisParcelBundles[ thisAssetType ];
 							if( ! thisBundlePath ) return nextEach();
 
 							thisParcel.writeBundle( thisAssetType, thisBundlePath, function( err, bundleWasWritten ) {
 								// don't stop writing other bundles if there was an error on this one. errors happen
-								// frequently with transforms.. like invalid scss, etc. don't stop the show, just 
+								// frequently with transforms.. like invalid scss, etc. don't stop the show, just
 								// keep going with our other bundles.
 
 								if( err ) _this.emit( 'error', err );
@@ -197,11 +197,11 @@ Parcelify.prototype.processParcels = function( browserifyInstance, options, call
 			} );
 
 			return callback( null );
-		} );
+		}, browserifyInstance);
 	} );
 };
 
-Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMapResult, existingPacakages, assetTypes, appTransforms, appTransformDirs, callback ) {
+Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMapResult, existingPacakages, assetTypes, appTransforms, appTransformDirs, callback, browserifyInstance ) {
 	var _this = this;
 	var mappedParcel = null;
 	var packagesThatWereCreated = {};
@@ -224,7 +224,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMapRes
 					}
 					else thisPackage = packagesThatWereCreated[ thisPackageId ] = new Package( packageOptions );
 
-					thisPackage.createAllAssets( assetTypes );
+					thisPackage.createAllAssets( assetTypes, { browserifyInstance: browserifyInstance });
 				}
 				else if( thisPackageIsAParcel && ! existingPacakages[ thisPackageId ] instanceof Parcel ) {
 					// k tricky here.. if this package is a parcel, but it exists in the manifest as a plain
@@ -240,7 +240,7 @@ Parcelify.prototype.instantiateParcelAndPackagesFromMap = function( parcelMapRes
 					oldPackage.destroy();
 
 					thisPackage = packagesThatWereCreated[ thisPackageId ] = new Parcel( packageOptions );
-					thisPackage.createAllAssets( assetTypes );
+					thisPackage.createAllAssets( assetTypes, { browserifyInstance: browserifyInstance });
 
 					oldDependentParcels.forEach( function( thisDependentParcel ) {
 						thisPackage.addDependentParcel( thisDependentParcel );
